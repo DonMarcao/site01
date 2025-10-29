@@ -111,6 +111,27 @@ const botConfig = {
 
 const tradingBot = new TradingBot(alpacaService, krakenService, riskManager, botConfig);
 
+// ==================== HELPER FUNCTIONS ====================
+
+/**
+ * Create service instances with API keys from request
+ */
+function createServices(apiKeys) {
+  let alpaca = alpacaService;
+  let kraken = krakenService;
+
+  // If API keys are provided, create new service instances
+  if (apiKeys && apiKeys.alpaca && apiKeys.alpaca.apiKey && apiKeys.alpaca.secretKey) {
+    alpaca = new AlpacaService(apiKeys.alpaca.apiKey, apiKeys.alpaca.secretKey);
+  }
+
+  if (apiKeys && apiKeys.kraken && apiKeys.kraken.apiKey && apiKeys.kraken.secretKey) {
+    kraken = new KrakenService(apiKeys.kraken.apiKey, apiKeys.kraken.secretKey);
+  }
+
+  return { alpaca, kraken };
+}
+
 // ==================== API ENDPOINTS ====================
 
 /**
@@ -118,6 +139,106 @@ const tradingBot = new TradingBot(alpacaService, krakenService, riskManager, bot
  */
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+/**
+ * POST /api/test-alpaca - Test Alpaca connection with provided keys
+ */
+app.post('/api/test-alpaca', async (req, res) => {
+  try {
+    const { apiKeys } = req.body;
+
+    if (!apiKeys || !apiKeys.alpaca || !apiKeys.alpaca.apiKey || !apiKeys.alpaca.secretKey) {
+      return res.status(400).json({
+        success: false,
+        message: 'Alpaca API keys are required'
+      });
+    }
+
+    // Create temporary service instance with provided keys
+    const testService = new AlpacaService(apiKeys.alpaca.apiKey, apiKeys.alpaca.secretKey);
+
+    if (!testService.isInitialized()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Failed to initialize Alpaca service with provided keys'
+      });
+    }
+
+    // Test connection
+    const connected = await testService.testConnection();
+
+    if (connected) {
+      // Get balance to show in UI
+      const balance = await testService.getBalance();
+      res.json({
+        success: true,
+        balance: balance.portfolioValue,
+        message: 'Alpaca connected successfully'
+      });
+    } else {
+      res.status(400).json({
+        success: false,
+        message: 'Failed to connect to Alpaca - check your API keys'
+      });
+    }
+  } catch (error) {
+    console.error('Alpaca test error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to test Alpaca connection'
+    });
+  }
+});
+
+/**
+ * POST /api/test-kraken - Test Kraken connection with provided keys
+ */
+app.post('/api/test-kraken', async (req, res) => {
+  try {
+    const { apiKeys } = req.body;
+
+    if (!apiKeys || !apiKeys.kraken || !apiKeys.kraken.apiKey || !apiKeys.kraken.secretKey) {
+      return res.status(400).json({
+        success: false,
+        message: 'Kraken API keys are required'
+      });
+    }
+
+    // Create temporary service instance with provided keys
+    const testService = new KrakenService(apiKeys.kraken.apiKey, apiKeys.kraken.secretKey);
+
+    if (!testService.isInitialized()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Failed to initialize Kraken service with provided keys'
+      });
+    }
+
+    // Test connection
+    const connected = await testService.testConnection();
+
+    if (connected) {
+      // Get balance to show in UI
+      const balance = await testService.getBalance();
+      res.json({
+        success: true,
+        balance: balance.total,
+        message: 'Kraken connected successfully'
+      });
+    } else {
+      res.status(400).json({
+        success: false,
+        message: 'Failed to connect to Kraken - check your API keys'
+      });
+    }
+  } catch (error) {
+    console.error('Kraken test error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to test Kraken connection'
+    });
+  }
 });
 
 /**
@@ -157,9 +278,9 @@ app.post('/api/stop', (req, res) => {
 });
 
 /**
- * GET /api/status - Get bot status
+ * POST /api/status - Get bot status
  */
-app.get('/api/status', async (req, res) => {
+app.post('/api/status', async (req, res) => {
   try {
     const status = tradingBot.getStatus();
     const balance = await tradingBot.getTotalBalance();
@@ -179,12 +300,15 @@ app.get('/api/status', async (req, res) => {
 });
 
 /**
- * GET /api/balance - Get balances from both exchanges
+ * POST /api/balance - Get balances from both exchanges
  */
-app.get('/api/balance', async (req, res) => {
+app.post('/api/balance', async (req, res) => {
   try {
-    const alpacaBalance = await alpacaService.getBalance();
-    const krakenBalance = await krakenService.getBalance();
+    const { apiKeys } = req.body;
+    const services = createServices(apiKeys);
+
+    const alpacaBalance = await services.alpaca.getBalance();
+    const krakenBalance = await services.kraken.getBalance();
 
     res.json({
       success: true,

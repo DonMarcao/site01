@@ -1,10 +1,20 @@
 const ccxt = require('ccxt');
 
 class KrakenService {
-  constructor() {
+  constructor(apiKey = null, secretKey = null) {
+    // Use provided keys or fall back to environment variables
+    const key = apiKey || process.env.KRAKEN_API_KEY;
+    const secret = secretKey || process.env.KRAKEN_SECRET_KEY;
+
+    if (!key || !secret) {
+      console.log('⚠️  Kraken API keys not provided - service not initialized');
+      this.exchange = null;
+      return;
+    }
+
     this.exchange = new ccxt.kraken({
-      apiKey: process.env.KRAKEN_API_KEY,
-      secret: process.env.KRAKEN_SECRET_KEY,
+      apiKey: key,
+      secret: secret,
       enableRateLimit: true
     });
 
@@ -12,10 +22,20 @@ class KrakenService {
   }
 
   /**
+   * Check if service is initialized
+   */
+  isInitialized() {
+    return this.exchange !== null;
+  }
+
+  /**
    * Test connection to Kraken
    */
   async testConnection() {
     try {
+      if (!this.isInitialized()) {
+        throw new Error('Kraken service not initialized - API keys missing');
+      }
       const balance = await this.exchange.fetchBalance();
       console.log('✅ Kraken connected successfully');
       return true;
