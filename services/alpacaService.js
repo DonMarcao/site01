@@ -1,10 +1,20 @@
 const Alpaca = require('@alpacahq/alpaca-trade-api');
 
 class AlpacaService {
-  constructor() {
+  constructor(apiKey = null, secretKey = null) {
+    // Use provided keys or fall back to environment variables
+    const keyId = apiKey || process.env.ALPACA_API_KEY;
+    const secret = secretKey || process.env.ALPACA_SECRET_KEY;
+
+    if (!keyId || !secret) {
+      console.log('⚠️  Alpaca API keys not provided - service not initialized');
+      this.alpaca = null;
+      return;
+    }
+
     this.alpaca = new Alpaca({
-      keyId: process.env.ALPACA_API_KEY,
-      secretKey: process.env.ALPACA_SECRET_KEY,
+      keyId: keyId,
+      secretKey: secret,
       paper: process.env.ALPACA_PAPER === 'true',
       usePolygon: false
     });
@@ -13,10 +23,20 @@ class AlpacaService {
   }
 
   /**
+   * Check if service is initialized
+   */
+  isInitialized() {
+    return this.alpaca !== null;
+  }
+
+  /**
    * Test connection to Alpaca
    */
   async testConnection() {
     try {
+      if (!this.isInitialized()) {
+        throw new Error('Alpaca service not initialized - API keys missing');
+      }
       const account = await this.alpaca.getAccount();
       console.log(`✅ Alpaca connected - Account: ${account.account_number}`);
       return true;

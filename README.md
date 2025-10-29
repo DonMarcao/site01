@@ -48,6 +48,23 @@ npm install
 
 ### 3. Configuration
 
+**Option A: Configure via Web UI (Recommended)**
+
+1. Start the server first:
+   ```bash
+   npm start
+   ```
+
+2. Open browser at http://localhost:3000
+
+3. Enter your API keys in the "API Configuration" section at the top
+
+4. Click "Test Alpaca" and "Test Kraken" to verify connections
+
+5. Click "Save All Keys" - keys are stored in browser localStorage
+
+**Option B: Configure via .env file**
+
 ```bash
 # Copy environment template
 cp .env.example .env
@@ -62,7 +79,7 @@ nano .env
 1. Sign up at https://alpaca.markets
 2. Go to Dashboard → API Keys (Paper Trading)
 3. Generate new API key
-4. Copy Key ID and Secret Key to `.env`
+4. Copy Key ID and Secret Key
 
 **Kraken (Crypto)**:
 1. Log in to https://www.kraken.com
@@ -71,44 +88,34 @@ nano .env
    - Query Funds
    - Query Open Orders and Trades
    - Create & Modify Orders
-4. Copy API Key and Private Key to `.env`
+4. Copy API Key and Private Key
 
-### 4. Test Connections
-
-```bash
-# Test if API keys work
-npm test
-```
-
-You should see:
-```
-✅ Alpaca connection successful!
-✅ Kraken connection successful!
-✅ ALL CONNECTIONS SUCCESSFUL!
-```
-
-### 5. Start the Bot
+### 4. Start the Bot
 
 ```bash
 # Start the server
 npm start
 ```
 
-### 6. Open Dashboard
+### 5. Open Dashboard
 
 Open your browser and go to:
 ```
 http://localhost:3000
 ```
 
-You should see the trading dashboard. Click **"Test Connections"** first, then **"START BOT"** when ready.
+You should see the trading dashboard with:
+1. **API Configuration section** - Enter and test your API keys
+2. **Test buttons** - Verify Alpaca and Kraken connections separately
+3. **START BOT button** - Launch automated trading after connections verified
 
 ## 📱 Dashboard Overview
 
 The dashboard shows:
 
+- **API Configuration**: Enter and test Alpaca/Kraken API keys (saves to browser)
 - **Settings**: Capital, risk level, daily limits
-- **Control Buttons**: Start, Pause, Stop
+- **Control Buttons**: Start, Pause, Stop, Test Connections
 - **Current Status**: Total balance, P&L, active positions
 - **Open Positions**: Real-time position tracking with P&L
 - **Recent Trades**: Trade history
@@ -117,22 +124,26 @@ The dashboard shows:
 
 ### First Time Setup
 
-1. **Paper Trading Mode** (Recommended)
-   - Make sure `ALPACA_PAPER=true` in `.env`
-   - This uses virtual money to test the bot
+1. **Enter API Keys**
+   - Open http://localhost:3000 in your browser
+   - Enter Alpaca API key and secret (paper trading)
+   - Enter Kraken API key and secret
+   - Click "Save All Keys"
 
-2. **Start Small**
-   - Set `CAPITAL_INICIAL=5000` (or less)
-   - Set conservative limits: `AGRESSIVIDADE=50`
+2. **Test Connections**
+   - Click "Test Alpaca" button - should show ✅ Connected + balance
+   - Click "Test Kraken" button - should show ✅ Connected + balance
+   - If ❌ Failed: Check your API keys are correct
 
-3. **Test Connections**
-   - Click "Test Connections" button
-   - Verify both exchanges are connected
-
-4. **Start Bot**
+3. **Start Bot**
    - Click "START BOT"
-   - Watch the console logs
-   - Monitor the dashboard
+   - Watch the dashboard for activity
+   - Monitor positions and trades
+
+4. **Paper Trading Mode** (Recommended)
+   - Alpaca paper trading uses virtual money
+   - Perfect for testing without risk
+   - Make sure you're using paper trading keys!
 
 ### During Operation
 

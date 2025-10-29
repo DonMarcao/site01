@@ -9,14 +9,195 @@ let updateTimer = null;
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
   console.log('Dashboard initialized');
+  loadApiKeys();
   updateStatus();
   startAutoUpdate();
 });
 
+// ==================== API KEY MANAGEMENT ====================
+
+/**
+ * Load API keys from localStorage
+ */
+function loadApiKeys() {
+  const alpacaApiKey = localStorage.getItem('alpacaApiKey');
+  const alpacaSecretKey = localStorage.getItem('alpacaSecretKey');
+  const krakenApiKey = localStorage.getItem('krakenApiKey');
+  const krakenSecretKey = localStorage.getItem('krakenSecretKey');
+
+  if (alpacaApiKey) document.getElementById('alpacaApiKey').value = alpacaApiKey;
+  if (alpacaSecretKey) document.getElementById('alpacaSecretKey').value = alpacaSecretKey;
+  if (krakenApiKey) document.getElementById('krakenApiKey').value = krakenApiKey;
+  if (krakenSecretKey) document.getElementById('krakenSecretKey').value = krakenSecretKey;
+
+  console.log('API keys loaded from localStorage');
+}
+
+/**
+ * Save API keys to localStorage
+ */
+function saveApiKeys() {
+  const alpacaApiKey = document.getElementById('alpacaApiKey').value.trim();
+  const alpacaSecretKey = document.getElementById('alpacaSecretKey').value.trim();
+  const krakenApiKey = document.getElementById('krakenApiKey').value.trim();
+  const krakenSecretKey = document.getElementById('krakenSecretKey').value.trim();
+
+  if (!alpacaApiKey || !alpacaSecretKey) {
+    showNotification('Please enter both Alpaca API key and secret key', 'warning');
+    return;
+  }
+
+  if (!krakenApiKey || !krakenSecretKey) {
+    showNotification('Please enter both Kraken API key and secret key', 'warning');
+    return;
+  }
+
+  localStorage.setItem('alpacaApiKey', alpacaApiKey);
+  localStorage.setItem('alpacaSecretKey', alpacaSecretKey);
+  localStorage.setItem('krakenApiKey', krakenApiKey);
+  localStorage.setItem('krakenSecretKey', krakenSecretKey);
+
+  showNotification('API keys saved successfully!', 'success');
+  console.log('API keys saved to localStorage');
+}
+
+/**
+ * Clear all API keys
+ */
+function clearApiKeys() {
+  if (!confirm('Are you sure you want to clear all API keys?')) {
+    return;
+  }
+
+  localStorage.removeItem('alpacaApiKey');
+  localStorage.removeItem('alpacaSecretKey');
+  localStorage.removeItem('krakenApiKey');
+  localStorage.removeItem('krakenSecretKey');
+
+  document.getElementById('alpacaApiKey').value = '';
+  document.getElementById('alpacaSecretKey').value = '';
+  document.getElementById('krakenApiKey').value = '';
+  document.getElementById('krakenSecretKey').value = '';
+
+  document.getElementById('alpacaStatusText').textContent = '❌ Not Connected';
+  document.getElementById('alpacaStatus').className = 'alert alert-secondary py-2';
+  document.getElementById('krakenStatusText').textContent = '❌ Not Connected';
+  document.getElementById('krakenStatus').className = 'alert alert-secondary py-2';
+
+  showNotification('API keys cleared', 'info');
+}
+
+/**
+ * Get API keys from form
+ */
+function getApiKeys() {
+  return {
+    alpaca: {
+      apiKey: document.getElementById('alpacaApiKey').value.trim(),
+      secretKey: document.getElementById('alpacaSecretKey').value.trim()
+    },
+    kraken: {
+      apiKey: document.getElementById('krakenApiKey').value.trim(),
+      secretKey: document.getElementById('krakenSecretKey').value.trim()
+    }
+  };
+}
+
+/**
+ * Test Alpaca connection
+ */
+async function testAlpaca() {
+  const keys = getApiKeys();
+
+  if (!keys.alpaca.apiKey || !keys.alpaca.secretKey) {
+    showNotification('Please enter Alpaca API credentials first', 'warning');
+    return;
+  }
+
+  const statusText = document.getElementById('alpacaStatusText');
+  const statusDiv = document.getElementById('alpacaStatus');
+
+  statusText.textContent = '⏳ Testing...';
+  statusDiv.className = 'alert alert-info py-2';
+
+  try {
+    const response = await fetch(`${API_URL}/test-alpaca`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ apiKeys: keys })
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      statusText.textContent = `✅ Connected - Balance: ${formatCurrency(data.balance)}`;
+      statusDiv.className = 'alert alert-success py-2';
+      showNotification('Alpaca connected successfully!', 'success');
+    } else {
+      statusText.textContent = `❌ Failed: ${data.message}`;
+      statusDiv.className = 'alert alert-danger py-2';
+      showNotification('Alpaca connection failed: ' + data.message, 'error');
+    }
+  } catch (error) {
+    statusText.textContent = `❌ Error: ${error.message}`;
+    statusDiv.className = 'alert alert-danger py-2';
+    showNotification('Alpaca test failed: ' + error.message, 'error');
+  }
+}
+
+/**
+ * Test Kraken connection
+ */
+async function testKraken() {
+  const keys = getApiKeys();
+
+  if (!keys.kraken.apiKey || !keys.kraken.secretKey) {
+    showNotification('Please enter Kraken API credentials first', 'warning');
+    return;
+  }
+
+  const statusText = document.getElementById('krakenStatusText');
+  const statusDiv = document.getElementById('krakenStatus');
+
+  statusText.textContent = '⏳ Testing...';
+  statusDiv.className = 'alert alert-info py-2';
+
+  try {
+    const response = await fetch(`${API_URL}/test-kraken`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ apiKeys: keys })
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      statusText.textContent = `✅ Connected - Balance: ${formatCurrency(data.balance)}`;
+      statusDiv.className = 'alert alert-success py-2';
+      showNotification('Kraken connected successfully!', 'success');
+    } else {
+      statusText.textContent = `❌ Failed: ${data.message}`;
+      statusDiv.className = 'alert alert-danger py-2';
+      showNotification('Kraken connection failed: ' + data.message, 'error');
+    }
+  } catch (error) {
+    statusText.textContent = `❌ Error: ${error.message}`;
+    statusDiv.className = 'alert alert-danger py-2';
+    showNotification('Kraken test failed: ' + error.message, 'error');
+  }
+}
+
+// ==================== BOT CONTROL ====================
+
 // Start Bot
 async function startBot() {
   try {
-    const response = await fetch(`${API_URL}/start`, { method: 'POST' });
+    const keys = getApiKeys();
+    const response = await fetch(`${API_URL}/start`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ apiKeys: keys })
+    });
     const data = await response.json();
 
     if (data.success) {
@@ -87,7 +268,12 @@ async function testConnections() {
 // Update Status
 async function updateStatus() {
   try {
-    const response = await fetch(`${API_URL}/status`);
+    const keys = getApiKeys();
+    const response = await fetch(`${API_URL}/status`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ apiKeys: keys })
+    });
     const data = await response.json();
 
     if (data.success) {
@@ -131,7 +317,12 @@ async function updateStatus() {
 // Update Balance
 async function updateBalance() {
   try {
-    const response = await fetch(`${API_URL}/balance`);
+    const keys = getApiKeys();
+    const response = await fetch(`${API_URL}/balance`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ apiKeys: keys })
+    });
     const data = await response.json();
 
     if (data.success) {

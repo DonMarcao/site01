@@ -16,6 +16,76 @@
       <p class="lead">Alpaca (Stocks) + Kraken (Crypto) | RSI Strategy</p>
     </div>
 
+    <!-- API Configuration Panel -->
+    <div class="card mb-4 border-warning">
+      <div class="card-header bg-warning">
+        <h5>🔑 API CONFIGURATION (Required First!)</h5>
+      </div>
+      <div class="card-body">
+        <div class="alert alert-info mb-3">
+          <strong>ℹ️ How to get API keys:</strong><br>
+          • <strong>Alpaca:</strong> <a href="https://alpaca.markets" target="_blank">alpaca.markets</a> → Paper Trading → API Keys<br>
+          • <strong>Kraken:</strong> <a href="https://www.kraken.com" target="_blank">kraken.com</a> → Settings → API → Generate API Key
+        </div>
+
+        <!-- Alpaca -->
+        <div class="row mb-3">
+          <div class="col-md-12">
+            <h6 class="fw-bold">📈 ALPACA (Stocks - Paper Trading)</h6>
+          </div>
+          <div class="col-md-5">
+            <label class="form-label">API Key</label>
+            <input type="text" class="form-control" id="alpacaApiKey" placeholder="Enter Alpaca API Key">
+          </div>
+          <div class="col-md-5">
+            <label class="form-label">Secret Key</label>
+            <input type="password" class="form-control" id="alpacaSecretKey" placeholder="Enter Alpaca Secret Key">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">&nbsp;</label>
+            <button class="btn btn-primary w-100" onclick="testAlpaca()">Test Alpaca</button>
+          </div>
+          <div class="col-md-12 mt-2">
+            <div id="alpacaStatus" class="alert alert-secondary py-2">
+              <strong>Status:</strong> <span id="alpacaStatusText">❌ Not Connected</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Kraken -->
+        <div class="row mb-3">
+          <div class="col-md-12">
+            <h6 class="fw-bold">🔷 KRAKEN (Crypto)</h6>
+          </div>
+          <div class="col-md-5">
+            <label class="form-label">API Key</label>
+            <input type="text" class="form-control" id="krakenApiKey" placeholder="Enter Kraken API Key">
+          </div>
+          <div class="col-md-5">
+            <label class="form-label">Secret Key</label>
+            <input type="password" class="form-control" id="krakenSecretKey" placeholder="Enter Kraken Secret Key">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">&nbsp;</label>
+            <button class="btn btn-primary w-100" onclick="testKraken()">Test Kraken</button>
+          </div>
+          <div class="col-md-12 mt-2">
+            <div id="krakenStatus" class="alert alert-secondary py-2">
+              <strong>Status:</strong> <span id="krakenStatusText">❌ Not Connected</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Save Button -->
+        <div class="row">
+          <div class="col-md-12 text-center">
+            <button class="btn btn-success btn-lg" onclick="saveApiKeys()">💾 Save All API Keys</button>
+            <button class="btn btn-secondary btn-lg ms-2" onclick="clearApiKeys()">🗑️ Clear All Keys</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Settings Panel -->
     <div class="card mb-4">
       <div class="card-header">
