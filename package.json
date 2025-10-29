@@ -1,0 +1,30 @@
+{
+  "name": "trading-bot",
+  "version": "1.0.0",
+  "description": "Automated trading bot for stocks (Alpaca) and crypto (Kraken) with RSI strategy",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node test-connections.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "@alpacahq/alpaca-trade-api": "^3.0.0",
+    "ccxt": "^4.0.0",
+    "sqlite3": "^5.1.6",
+    "technicalindicators": "^3.1.0",
+    "axios": "^1.5.0"
+  },
+  "keywords": [
+    "trading",
+    "bot",
+    "alpaca",
+    "kraken",
+    "rsi",
+    "automated-trading"
+  ],
+  "author": "",
+  "license": "ISC"
+}
