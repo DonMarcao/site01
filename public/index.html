@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Automated Trading Bot</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container-fluid py-4">
+
+    <!-- Header -->
+    <div class="header text-center mb-4">
+      <h1 class="display-4">🤖 AUTOMATED TRADING BOT</h1>
+      <p class="lead">Alpaca (Stocks) + Kraken (Crypto) | RSI Strategy</p>
+    </div>
+
+    <!-- Settings Panel -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5>⚙️ SETTINGS</h5>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-3">
+            <label>Initial Capital</label>
+            <input type="number" class="form-control" id="capitalInicial" value="5000" readonly>
+          </div>
+          <div class="col-md-3">
+            <label>Max Daily Profit</label>
+            <input type="number" class="form-control" id="lucroMaximo" value="500" readonly>
+          </div>
+          <div class="col-md-3">
+            <label>Max Daily Loss</label>
+            <input type="number" class="form-control" id="perdaMaxima" value="200" readonly>
+          </div>
+          <div class="col-md-3">
+            <label>Risk Level: <span id="riskValue">70</span>%</label>
+            <input type="range" class="form-range" id="riskLevel" min="50" max="100" value="70" disabled>
+          </div>
+        </div>
+        <div class="row mt-3">
+          <div class="col-md-12">
+            <div class="form-check form-check-inline">
+              <input class="form-check-input" type="checkbox" id="enableStocks" checked disabled>
+              <label class="form-check-label" for="enableStocks">Stocks (Top 100)</label>
+            </div>
+            <div class="form-check form-check-inline">
+              <input class="form-check-input" type="checkbox" id="enableCrypto" checked disabled>
+              <label class="form-check-label" for="enableCrypto">Crypto (Top 10)</label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Control Buttons -->
+    <div class="text-center mb-4">
+      <button class="btn btn-success btn-lg me-2" id="startBtn" onclick="startBot()">▶️ START BOT</button>
+      <button class="btn btn-warning btn-lg me-2" id="pauseBtn" onclick="pauseBot()" disabled>⏸️ PAUSE</button>
+      <button class="btn btn-danger btn-lg" id="stopBtn" onclick="stopBot()" disabled>🛑 STOP</button>
+      <button class="btn btn-info btn-lg ms-3" onclick="testConnections()">🔌 Test Connections</button>
+    </div>
+
+    <hr class="my-4">
+
+    <!-- Current Status -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5>📊 CURRENT STATUS</h5>
+      </div>
+      <div class="card-body">
+        <div class="row text-center">
+          <div class="col-md-3">
+            <h6>Total Balance</h6>
+            <h3 id="totalBalance">€0.00</h3>
+          </div>
+          <div class="col-md-3">
+            <h6>Today's P&L</h6>
+            <h3 id="todayPnL">€0.00</h3>
+            <small id="todayPnLPercent">(0.00%)</small>
+          </div>
+          <div class="col-md-2">
+            <h6>Status</h6>
+            <h4><span id="botStatus" class="badge bg-secondary">STOPPED</span></h4>
+          </div>
+          <div class="col-md-2">
+            <h6>Trades Today</h6>
+            <h3 id="tradesCount">0</h3>
+          </div>
+          <div class="col-md-2">
+            <h6>Assets Scanned</h6>
+            <h3 id="assetsScanned">110</h3>
+          </div>
+        </div>
+        <div class="row text-center mt-3">
+          <div class="col-md-6">
+            <h6>Alpaca (Stocks)</h6>
+            <h4 id="alpacaBalance">€0.00</h4>
+          </div>
+          <div class="col-md-6">
+            <h6>Kraken (Crypto)</h6>
+            <h4 id="krakenBalance">€0.00</h4>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Open Positions -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5>📈 OPEN POSITIONS <span id="positionsCount" class="badge bg-primary">0</span></h5>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Symbol</th>
+                <th>Exchange</th>
+                <th>Quantity</th>
+                <th>Entry Price</th>
+                <th>Current Price</th>
+                <th>P&L</th>
+                <th>P&L %</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="positionsTable">
+              <tr>
+                <td colspan="8" class="text-center text-muted">No open positions</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Trades -->
+    <div class="card">
+      <div class="card-header">
+        <h5>📋 RECENT TRADES</h5>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-sm">
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>Symbol</th>
+                <th>Exchange</th>
+                <th>Type</th>
+                <th>Quantity</th>
+                <th>Price</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody id="tradesTable">
+              <tr>
+                <td colspan="7" class="text-center text-muted">No trades yet</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="text-center mt-4 text-muted">
+      <p>Last updated: <span id="lastUpdate">Never</span></p>
+      <p><small>⚠️ Trading involves risk. Use paper trading first. This bot is for educational purposes.</small></p>
+    </div>
+
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
