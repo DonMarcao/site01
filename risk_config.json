@@ -1,0 +1,14 @@
+{
+  "risk_management": {
+    "max_loss": 20,
+    "stop_loss_percentage": -3,
+    "take_profit_percentage": 10,
+    "max_profit": 5000
+  },
+  "description": {
+    "max_loss": "Maximum loss allowed per trade",
+    "stop_loss_percentage": "Stop-loss percentage (-3%)",
+    "take_profit_percentage": "Take-profit percentage (+10%)",
+    "max_profit": "Maximum profit target"
+  }
+}
