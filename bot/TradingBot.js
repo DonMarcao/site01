@@ -39,12 +39,35 @@ class TradingBot {
 
     console.log('\n🚀 Starting Trading Bot...');
 
-    // Test connections
-    const alpacaOk = await this.alpacaService.testConnection();
-    const krakenOk = await this.krakenService.testConnection();
+    // Check which exchanges are enabled
+    const enableAlpaca = process.env.ENABLE_ALPACA === 'true';
+    const enableKraken = process.env.ENABLE_KRAKEN === 'true';
+
+    if (!enableAlpaca && !enableKraken) {
+      console.error('❌ No exchanges enabled. Please enable at least one exchange in .env');
+      return false;
+    }
+
+    // Test connections for enabled exchanges
+    let alpacaOk = !enableAlpaca; // If disabled, mark as OK
+    let krakenOk = !enableKraken; // If disabled, mark as OK
+
+    if (enableAlpaca && this.alpacaService.isInitialized()) {
+      alpacaOk = await this.alpacaService.testConnection();
+      if (!alpacaOk) {
+        console.error('❌ Failed to connect to Alpaca. Please check API keys.');
+      }
+    }
+
+    if (enableKraken && this.krakenService.isInitialized()) {
+      krakenOk = await this.krakenService.testConnection();
+      if (!krakenOk) {
+        console.error('❌ Failed to connect to Kraken. Please check API keys.');
+      }
+    }
 
     if (!alpacaOk || !krakenOk) {
-      console.error('❌ Failed to connect to exchanges. Please check API keys.');
+      console.error('❌ Failed to connect to enabled exchanges. Please check API keys.');
       return false;
     }
 
@@ -53,11 +76,12 @@ class TradingBot {
     this.riskManager.resetDailyStats(balance);
 
     this.status = 'running';
-    this.stockSymbols = stockSymbols;
-    this.cryptoConfigs = cryptoConfigs;
+    this.stockSymbols = enableAlpaca ? stockSymbols : [];
+    this.cryptoConfigs = enableKraken ? cryptoConfigs : [];
 
     console.log('✅ Bot started successfully');
-    console.log(`📊 Monitoring ${stockSymbols.length} stocks + ${cryptoConfigs.length} crypto pairs`);
+    console.log(`📊 Exchanges enabled: ${enableAlpaca ? 'Alpaca' : ''}${enableAlpaca && enableKraken ? ' + ' : ''}${enableKraken ? 'Kraken' : ''}`);
+    console.log(`📊 Monitoring ${this.stockSymbols.length} stocks + ${this.cryptoConfigs.length} crypto pairs`);
     console.log(`⏰ Scan interval: ${this.config.scanInterval / 1000}s\n`);
 
     // Run first scan immediately
@@ -115,10 +139,18 @@ class TradingBot {
       console.log(`\n${'='.repeat(60)}`);
       console.log(`⏰ ${new Date().toLocaleString()}`);
 
-      // Check if market is open for stocks
-      const marketOpen = await this.alpacaService.isMarketOpen();
-      if (!marketOpen) {
-        console.log('⚠️  US Stock market is closed. Crypto trading continues...');
+      // Check if market is open for stocks (only if Alpaca is enabled)
+      const enableAlpaca = process.env.ENABLE_ALPACA === 'true';
+      const enableKraken = process.env.ENABLE_KRAKEN === 'true';
+
+      if (enableAlpaca && this.alpacaService.isInitialized()) {
+        const marketOpen = await this.alpacaService.isMarketOpen();
+        if (!marketOpen && enableKraken) {
+          console.log('⚠️  US Stock market is closed. Crypto trading continues...');
+        } else if (!marketOpen) {
+          console.log('⚠️  US Stock market is closed. Skipping this cycle...');
+          return;
+        }
       }
 
       // Get current balance and positions
@@ -297,31 +329,63 @@ class TradingBot {
    * Close all positions
    */
   async closeAllPositions() {
-    await this.alpacaService.closeAllPositions();
-    const krakenPositions = await this.krakenService.getPositions();
-    for (const pos of krakenPositions) {
-      await this.krakenService.closePosition(pos.symbol);
+    const enableAlpaca = process.env.ENABLE_ALPACA === 'true';
+    const enableKraken = process.env.ENABLE_KRAKEN === 'true';
+
+    if (enableAlpaca && this.alpacaService.isInitialized()) {
+      await this.alpacaService.closeAllPositions();
+    }
+
+    if (enableKraken && this.krakenService.isInitialized()) {
+      const krakenPositions = await this.krakenService.getPositions();
+      for (const pos of krakenPositions) {
+        await this.krakenService.closePosition(pos.symbol);
+      }
     }
   }
 
   /**
-   * Get total balance across both exchanges
+   * Get total balance across enabled exchanges
    */
   async getTotalBalance() {
-    const alpacaBalance = await this.alpacaService.getBalance();
-    const krakenBalance = await this.krakenService.getBalance();
+    let total = 0;
 
-    return alpacaBalance.portfolioValue + krakenBalance.total;
+    const enableAlpaca = process.env.ENABLE_ALPACA === 'true';
+    const enableKraken = process.env.ENABLE_KRAKEN === 'true';
+
+    if (enableAlpaca && this.alpacaService.isInitialized()) {
+      const alpacaBalance = await this.alpacaService.getBalance();
+      total += alpacaBalance.portfolioValue;
+    }
+
+    if (enableKraken && this.krakenService.isInitialized()) {
+      const krakenBalance = await this.krakenService.getBalance();
+      total += krakenBalance.total;
+    }
+
+    return total;
   }
 
   /**
-   * Get all positions from both exchanges
+   * Get all positions from enabled exchanges
    */
   async getAllPositions() {
-    const alpacaPositions = await this.alpacaService.getPositions();
-    const krakenPositions = await this.krakenService.getPositions();
+    const positions = [];
 
-    return [...alpacaPositions, ...krakenPositions];
+    const enableAlpaca = process.env.ENABLE_ALPACA === 'true';
+    const enableKraken = process.env.ENABLE_KRAKEN === 'true';
+
+    if (enableAlpaca && this.alpacaService.isInitialized()) {
+      const alpacaPositions = await this.alpacaService.getPositions();
+      positions.push(...alpacaPositions);
+    }
+
+    if (enableKraken && this.krakenService.isInitialized()) {
+      const krakenPositions = await this.krakenService.getPositions();
+      positions.push(...krakenPositions);
+    }
+
+    return positions;
   }
 
   /**
