@@ -8,16 +8,28 @@ console.log('='.repeat(60) + '\n');
 
 async function testConnections() {
   let allPassed = true;
+  const enableAlpaca = process.env.ENABLE_ALPACA === 'true';
+  const enableKraken = process.env.ENABLE_KRAKEN === 'true';
 
-  // Test Alpaca
-  console.log('📈 Testing Alpaca Connection...');
-  console.log('-'.repeat(60));
+  console.log(`Configuration:`);
+  console.log(`  Alpaca: ${enableAlpaca ? '✅ ENABLED' : '⚠️  DISABLED'}`);
+  console.log(`  Kraken: ${enableKraken ? '✅ ENABLED' : '⚠️  DISABLED'}\n`);
 
-  if (!process.env.ALPACA_API_KEY || !process.env.ALPACA_SECRET_KEY) {
-    console.log('❌ Alpaca API keys not found in .env file');
-    console.log('   Please add ALPACA_API_KEY and ALPACA_SECRET_KEY\n');
+  if (!enableAlpaca && !enableKraken) {
+    console.log('❌ No exchanges enabled. Please set ENABLE_ALPACA=true or ENABLE_KRAKEN=true in .env\n');
     allPassed = false;
-  } else {
+  }
+
+  // Test Alpaca (only if enabled)
+  if (enableAlpaca) {
+    console.log('📈 Testing Alpaca Connection...');
+    console.log('-'.repeat(60));
+
+    if (!process.env.ALPACA_API_KEY || !process.env.ALPACA_SECRET_KEY) {
+      console.log('❌ Alpaca API keys not found in .env file');
+      console.log('   Please add ALPACA_API_KEY and ALPACA_SECRET_KEY\n');
+      allPassed = false;
+    } else {
     try {
       const alpaca = new AlpacaService();
       const alpacaOk = await alpaca.testConnection();
@@ -49,17 +61,21 @@ async function testConnections() {
       console.log('   Please check your API keys and permissions\n');
       allPassed = false;
     }
+    }
+  } else {
+    console.log('📈 Alpaca: DISABLED (skipping test)\n');
   }
 
-  // Test Kraken
-  console.log('🔷 Testing Kraken Connection...');
-  console.log('-'.repeat(60));
+  // Test Kraken (only if enabled)
+  if (enableKraken) {
+    console.log('🔷 Testing Kraken Connection...');
+    console.log('-'.repeat(60));
 
-  if (!process.env.KRAKEN_API_KEY || !process.env.KRAKEN_SECRET_KEY) {
-    console.log('❌ Kraken API keys not found in .env file');
-    console.log('   Please add KRAKEN_API_KEY and KRAKEN_SECRET_KEY\n');
-    allPassed = false;
-  } else {
+    if (!process.env.KRAKEN_API_KEY || !process.env.KRAKEN_SECRET_KEY) {
+      console.log('❌ Kraken API keys not found in .env file');
+      console.log('   Please add KRAKEN_API_KEY and KRAKEN_SECRET_KEY\n');
+      allPassed = false;
+    } else {
     try {
       const kraken = new KrakenService();
       const krakenOk = await kraken.testConnection();
@@ -95,13 +111,23 @@ async function testConnections() {
       console.log('   Please check your API keys and permissions\n');
       allPassed = false;
     }
+    }
+  } else {
+    console.log('🔷 Kraken: DISABLED (skipping test)\n');
   }
 
   // Summary
   console.log('='.repeat(60));
   if (allPassed) {
-    console.log('✅ ALL CONNECTIONS SUCCESSFUL!');
+    console.log('✅ ALL ENABLED CONNECTIONS SUCCESSFUL!');
     console.log('🚀 You can now start the bot with: npm start');
+    if (enableAlpaca && !enableKraken) {
+      console.log('📈 Bot will trade stocks on Alpaca only');
+    } else if (!enableAlpaca && enableKraken) {
+      console.log('🔷 Bot will trade crypto on Kraken only');
+    } else if (enableAlpaca && enableKraken) {
+      console.log('📊 Bot will trade stocks on Alpaca AND crypto on Kraken');
+    }
   } else {
     console.log('❌ SOME CONNECTIONS FAILED');
     console.log('⚠️  Please fix the issues above before starting the bot');

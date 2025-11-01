@@ -12,12 +12,20 @@ class AlpacaService {
       return;
     }
 
-    this.alpaca = new Alpaca({
+    // Configure base URL for paper trading
+    const config = {
       keyId: keyId,
       secretKey: secret,
       paper: process.env.ALPACA_PAPER === 'true',
       usePolygon: false
-    });
+    };
+
+    // If using paper trading, set the base URL
+    if (process.env.ALPACA_PAPER === 'true') {
+      config.baseUrl = 'https://paper-api.alpaca.markets';
+    }
+
+    this.alpaca = new Alpaca(config);
 
     console.log(`📈 Alpaca initialized (${process.env.ALPACA_PAPER === 'true' ? 'PAPER' : 'LIVE'} trading)`);
   }
@@ -42,6 +50,9 @@ class AlpacaService {
       return true;
     } catch (error) {
       console.error('❌ Alpaca connection failed:', error.message);
+      if (error.response && error.response.data) {
+        console.error('   Error details:', JSON.stringify(error.response.data, null, 2));
+      }
       return false;
     }
   }
